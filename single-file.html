@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Шарик и кирпичи — 500 уровней</title>
+    <meta name="description" content="Одиночный HTML-файл для игры Шарик и кирпичи" />
+    <style>
+      :root {
+        --bg-1: #0f172a;
+        --bg-2: #111827;
+        --panel: rgba(17, 24, 39, 0.82);
+        --panel-strong: rgba(15, 23, 42, 0.92);
+        --card: rgba(30, 41, 59, 0.7);
+        --border: rgba(148, 163, 184, 0.25);
+        --text: #edf6ff;
+        --muted: #bfd1ea;
+        --primary: #8b5cf6;
+        --primary-2: #14b8a6;
+        --danger: #f87171;
+        --warning: #fbbf24;
+        --canvas-bg: #131f36;
+        --canvas-border: #405174;
+        --shadow: rgba(0, 0, 0, 0.35);
+        --button-text: #f8fafc;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(circle at top, var(--bg-2), var(--bg-1) 60%);
+        color: var(--text);
+      }
+
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+      }
+
+      .app {
+        width: min(980px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow: 0 24px 60px var(--shadow);
+        padding: 18px 18px 22px;
+        backdrop-filter: blur(10px);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--primary-2);
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(24px, 4vw, 40px);
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 12px;
+        font: inherit;
+        cursor: pointer;
+        transition: transform 0.18s ease, opacity 0.18s ease;
+      }
+
+      .secondary {
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 10px 14px;
+        font-weight: 600;
+      }
+
+      .primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-2));
+        color: var(--button-text);
+        padding: 14px 22px;
+        font-weight: 800;
+      }
+
+      button:hover { transform: translateY(-1px); }
+
+      .hud {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(120px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .stat {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .label {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .stat strong {
+        font-size: clamp(18px, 2vw, 26px);
+      }
+
+      .game-wrap {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        overflow: hidden;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: auto;
+        background: var(--canvas-bg);
+        border: 2px solid var(--canvas-border);
+        border-radius: 22px;
+        touch-action: none;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: rgba(6, 10, 18, 0.55);
+        opacity: 1;
+        pointer-events: all;
+        transition: opacity 0.2s ease;
+      }
+
+      .overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .card {
+        width: min(420px, calc(100% - 32px));
+        padding: 28px 22px 24px;
+        background: var(--panel-strong);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+        text-align: center;
+      }
+
+      .tag {
+        margin: 0 0 12px;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--primary-2);
+        font-weight: 700;
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: clamp(28px, 4vw, 38px);
+      }
+
+      .card p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      @media (max-width: 760px) {
+        body { padding: 12px; }
+        .app { padding: 14px 14px 18px; }
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .controls { width: 100%; }
+        .controls button { flex: 1; }
+        .hud { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Arcade Challenge</p>
+          <h1>Шарик и кирпичи</h1>
+        </div>
+        <div class="controls">
+          <button id="soundBtn" class="secondary" aria-label="Звук">🔊 Звук</button>
+        </div>
+      </header>
+
+      <section class="hud">
+        <div class="stat">
+          <span class="label">Уровень</span>
+          <strong id="levelValue">1 / 500</strong>
+        </div>
+        <div class="stat">
+          <span class="label">Жизни</span>
+          <strong id="livesValue">3</strong>
+        </div>
+        <div class="stat">
+          <span class="label">Счёт</span>
+          <strong id="scoreValue">0</strong>
+        </div>
+        <div class="stat">
+          <span class="label">Рекорд</span>
+          <strong id="bestValue">0</strong>
+        </div>
+      </section>
+
+      <div class="game-wrap">
+        <canvas id="gameCanvas" width="900" height="600"></canvas>
+        <div id="overlay" class="overlay">
+          <div class="card">
+            <p id="overlayTag" class="tag">Ready</p>
+            <h2 id="overlayTitle">Нажмите старт</h2>
+            <p id="overlayText">Разбейте все кирпичи и доберитесь до 500 уровня.</p>
+            <button id="startBtn" class="primary">Старт</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById('gameCanvas');
+      const ctx = canvas.getContext('2d');
+      const overlay = document.getElementById('overlay');
+      const overlayTag = document.getElementById('overlayTag');
+      const overlayTitle = document.getElementById('overlayTitle');
+      const overlayText = document.getElementById('overlayText');
+      const startBtn = document.getElementById('startBtn');
+      const levelValue = document.getElementById('levelValue');
+      const livesValue = document.getElementById('livesValue');
+      const scoreValue = document.getElementById('scoreValue');
+      const bestValue = document.getElementById('bestValue');
+      const soundBtn = document.getElementById('soundBtn');
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const TOTAL_LEVELS = 500;
+      const STORAGE_KEY = 'andreball-best-score';
+      const SOUND_KEY = 'andreball-sound';
+
+      let level = 1;
+      let lives = 3;
+      let score = 0;
+      let bestScore = Number(localStorage.getItem(STORAGE_KEY) || 0);
+      let bricks = [];
+      let state = 'ready';
+      let lastTime = 0;
+      let pointerX = W / 2;
+      let soundEnabled = localStorage.getItem(SOUND_KEY) !== 'false';
+      let audioCtx = null;
+
+      const paddle = { x: W / 2 - 58, y: H - 45, w: 116, h: 14 };
+      const ball = { x: W / 2, y: H - 65, r: 9, vx: 0, vy: 0, speed: 300 };
+
+      function updateHUD() {
+        levelValue.textContent = `${level} / ${TOTAL_LEVELS}`;
+        livesValue.textContent = String(lives);
+        scoreValue.textContent = String(score);
+        bestValue.textContent = String(bestScore);
+      }
+
+      function ensureAudio() {
+        if (!audioCtx) {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) return null;
+          audioCtx = new AudioCtor();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return audioCtx;
+      }
+
+      function setSound(enabled) {
+        soundEnabled = enabled;
+        localStorage.setItem(SOUND_KEY, String(enabled));
+        soundBtn.textContent = enabled ? '🔊 Звук' : '🔇 Звук';
+      }
+
+      function playTone({ frequency = 440, duration = 0.08, type = 'sine', gain = 0.04, slide = 0 }) {
+        if (!soundEnabled) return;
+        const ctxAudio = ensureAudio();
+        if (!ctxAudio) return;
+
+        const oscillator = ctxAudio.createOscillator();
+        const gainNode = ctxAudio.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, ctxAudio.currentTime);
+        if (slide) {
+          oscillator.frequency.exponentialRampToValueAtTime(
+            Math.max(40, frequency + slide),
+            ctxAudio.currentTime + duration
+          );
+        }
+
+        gainNode.gain.setValueAtTime(0.0001, ctxAudio.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(gain, ctxAudio.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctxAudio.currentTime + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctxAudio.destination);
+        oscillator.start();
+        oscillator.stop(ctxAudio.currentTime + duration);
+      }
+
+      function levelSpeed(n) {
+        return Math.min(300 + n * 0.75, 670);
+      }
+
+      function paddleWidth(n) {
+        return Math.max(58, 116 - Math.floor(n / 8));
+      }
+
+      function makeLevel(n) {
+        bricks = [];
+        const cols = 10;
+        const rows = Math.min(4 + Math.floor((n - 1) / 12), 9);
+        const gap = 6;
+        const left = 42;
+        const top = 76;
+        const brickW = (W - left * 2 - gap * (cols - 1)) / cols;
+        const brickH = 22;
+        const pattern = Math.floor((n - 1) / 5) % 5;
+
+        let seed = (n * 9301 + 49297) % 233280;
+        function random() {
+          seed = (seed * 9301 + 49297) % 233280;
+          return seed / 233280;
+        }
+
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            let present = true;
+            if (pattern === 0) present = (row + col + n) % 5 !== 0;
+            if (pattern === 1) present = col >= 2 && col <= 7;
+            if (pattern === 2) present = Math.abs(col - 4.5) <= row + 1;
+            if (pattern === 3) present = (row + col) % 2 === 0 || row === 0;
+            if (pattern === 4) present = random() > 0.23;
+            if (!present) continue;
+
+            const hp = Math.min(1 + Math.floor(n / 35) + (random() > 0.72 ? 1 : 0), 3);
+            bricks.push({
+              x: left + col * (brickW + gap),
+              y: top + row * (brickH + gap),
+              w: brickW,
+              h: brickH,
+              hp,
+              maxHp: hp,
+            });
+          }
+        }
+
+        if (bricks.length === 0) {
+          bricks.push({ x: W / 2 - 40, y: top, w: 80, h: brickH, hp: 1, maxHp: 1 });
+        }
+
+        ball.speed = levelSpeed(n);
+        paddle.w = paddleWidth(n);
+        resetBall();
+      }
+
+      function resetBall() {
+        paddle.x = Math.max(0, Math.min(W - paddle.w, pointerX - paddle.w / 2));
+        ball.x = paddle.x + paddle.w / 2;
+        ball.y = paddle.y - ball.r - 2;
+        ball.vx = 0;
+        ball.vy = 0;
+      }
+
+      function showOverlay(tag, title, text, buttonText = 'Старт') {
+        overlayTag.textContent = tag;
+        overlayTitle.textContent = title;
+        overlayText.textContent = text;
+        startBtn.textContent = buttonText;
+        overlay.classList.remove('hidden');
+      }
+
+      function hideOverlay() {
+        overlay.classList.add('hidden');
+      }
+
+      function launchBall() {
+        if (state !== 'ready') return;
+        const angle = (Math.random() * 0.7 - 0.35);
+        ball.vx = ball.speed * Math.sin(angle);
+        ball.vy = -ball.speed * Math.cos(angle);
+        state = 'playing';
+        hideOverlay();
+        playTone({ frequency: 430, duration: 0.08, type: 'triangle', gain: 0.06, slide: 120 });
+      }
+
+      function setPointer(clientX) {
+        const rect = canvas.getBoundingClientRect();
+        pointerX = ((clientX - rect.left) / rect.width) * W;
+        paddle.x = Math.max(0, Math.min(W - paddle.w, pointerX - paddle.w / 2));
+        if (state === 'ready') {
+          ball.x = paddle.x + paddle.w / 2;
+          ball.y = paddle.y - ball.r - 2;
+        }
+      }
+
+      function restartGame() {
+        level = 1;
+        lives = 3;
+        score = 0;
+        state = 'ready';
+        makeLevel(level);
+        updateHUD();
+        showOverlay('Ready', 'Нажмите старт', 'Разбейте все кирпичи и пройдите 500 уровней');
+      }
+
+      function loseLife() {
+        lives -= 1;
+        if (lives <= 0) {
+          state = 'over';
+          bestScore = Math.max(bestScore, score);
+          localStorage.setItem(STORAGE_KEY, String(bestScore));
+          updateHUD();
+          showOverlay('Game Over', 'Игра окончена', 'Нажмите старт, чтобы начать заново', 'Начать заново');
+          playTone({ frequency: 180, type: 'sawtooth', duration: 0.28, gain: 0.05, slide: -80 });
+          return;
+        }
+
+        state = 'ready';
+        resetBall();
+        updateHUD();
+        showOverlay('Life Lost', 'Потеряна жизнь', 'Нажмите старт, чтобы продолжить');
+      }
+
+      function nextLevel() {
+        if (level >= TOTAL_LEVELS) {
+          state = 'won';
+          bestScore = Math.max(bestScore, score);
+          localStorage.setItem(STORAGE_KEY, String(bestScore));
+          updateHUD();
+          showOverlay('Victory', 'Вы прошли все 500 уровней!', 'Нажмите старт, чтобы сыграть снова', 'Играть снова');
+          playTone({ frequency: 900, type: 'triangle', duration: 0.25, gain: 0.08, slide: 280 });
+          return;
+        }
+
+        level += 1;
+        makeLevel(level);
+        state = 'ready';
+        updateHUD();
+        showOverlay('Level Up', `Уровень ${level}`, 'Нажмите старт, чтобы продолжить');
+      }
+
+      function handleBrickHit(brick, oldX, oldY) {
+        if (oldY + ball.r <= brick.y || oldY - ball.r >= brick.y + brick.h) {
+          ball.vy *= -1;
+        } else if (oldX + ball.r <= brick.x || oldX - ball.r >= brick.x + brick.w) {
+          ball.vx *= -1;
+        } else {
+          ball.vy *= -1;
+        }
+
+        brick.hp -= 1;
+        score += brick.maxHp === 1 ? 10 : brick.maxHp === 2 ? 20 : 35;
+        bestScore = Math.max(bestScore, score);
+        localStorage.setItem(STORAGE_KEY, String(bestScore));
+        updateHUD();
+
+        playTone({
+          frequency: brick.hp <= 0 ? 480 : 360,
+          duration: 0.07,
+          type: brick.hp <= 0 ? 'square' : 'triangle',
+          gain: 0.05,
+          slide: brick.hp <= 0 ? 160 : 80,
+        });
+
+        if (brick.hp <= 0) {
+          const index = bricks.indexOf(brick);
+          if (index >= 0) bricks.splice(index, 1);
+        }
+      }
+
+      function update(dt) {
+        if (state !== 'playing') return;
+
+        const oldX = ball.x;
+        const oldY = ball.y;
+
+        ball.x += ball.vx * dt;
+        ball.y += ball.vy * dt;
+
+        if (ball.x - ball.r < 0) {
+          ball.x = ball.r;
+          ball.vx = Math.abs(ball.vx);
+          playTone({ frequency: 250, duration: 0.04, gain: 0.04, type: 'square' });
+        }
+
+        if (ball.x + ball.r > W) {
+          ball.x = W - ball.r;
+          ball.vx = -Math.abs(ball.vx);
+          playTone({ frequency: 250, duration: 0.04, gain: 0.04, type: 'square' });
+        }
+
+        if (ball.y - ball.r < 0) {
+          ball.y = ball.r;
+          ball.vy = Math.abs(ball.vy);
+          playTone({ frequency: 280, duration: 0.04, gain: 0.04, type: 'square' });
+        }
+
+        if (
+          ball.vy > 0 &&
+          ball.y + ball.r >= paddle.y &&
+          ball.y - ball.r <= paddle.y + paddle.h &&
+          ball.x >= paddle.x &&
+          ball.x <= paddle.x + paddle.w
+        ) {
+          const hit = (ball.x - (paddle.x + paddle.w / 2)) / (paddle.w / 2);
+          const angle = hit * 1.05;
+          ball.vx = ball.speed * Math.sin(angle);
+          ball.vy = -Math.abs(ball.speed * Math.cos(angle));
+          ball.y = paddle.y - ball.r;
+          playTone({ frequency: 520, duration: 0.06, gain: 0.04, type: 'triangle', slide: 80 });
+        }
+
+        for (let i = bricks.length - 1; i >= 0; i--) {
+          const brick = bricks[i];
+          const closestX = Math.max(brick.x, Math.min(ball.x, brick.x + brick.w));
+          const closestY = Math.max(brick.y, Math.min(ball.y, brick.y + brick.h));
+          const dx = ball.x - closestX;
+          const dy = ball.y - closestY;
+
+          if (dx * dx + dy * dy <= ball.r * ball.r) {
+            handleBrickHit(brick, oldX, oldY);
+            break;
+          }
+        }
+
+        if (ball.y - ball.r > H) {
+          loseLife();
+          return;
+        }
+
+        if (bricks.length === 0) {
+          if (level >= TOTAL_LEVELS) {
+            state = 'won';
+            bestScore = Math.max(bestScore, score);
+            localStorage.setItem(STORAGE_KEY, String(bestScore));
+            updateHUD();
+            showOverlay('Victory', 'Вы прошли все 500 уровней!', 'Нажмите старт, чтобы сыграть снова', 'Играть снова');
+            playTone({ frequency: 900, type: 'triangle', duration: 0.25, gain: 0.08, slide: 280 });
+          } else {
+            nextLevel();
+          }
+        }
+      }
+
+      function drawBackground() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, W, H);
+        for (let i = 0; i < 34; i++) {
+          ctx.fillStyle = 'rgba(255,255,255,0.04)';
+          ctx.fillRect((i * 31) % W, (i * 47) % H, 2, 2);
+        }
+      }
+
+      function drawHUD() {
+        ctx.fillStyle = '#eef4ff';
+        ctx.font = 'bold 18px system-ui';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Уровень: ${level} / ${TOTAL_LEVELS}`, 24, 32);
+        ctx.textAlign = 'right';
+        ctx.fillText(`Жизни: ${'♥ '.repeat(lives)}`, W - 24, 32);
+      }
+
+      function drawBricks() {
+        for (const brick of bricks) {
+          const colors = ['#53d6c5', '#ffc857', '#ff7b72'];
+          ctx.fillStyle = colors[Math.min(brick.hp - 1, 2)];
+          ctx.fillRect(brick.x, brick.y, brick.w, brick.h);
+          ctx.fillStyle = '#ffffff55';
+          ctx.fillRect(brick.x + 3, brick.y + 3, brick.w - 6, 3);
+        }
+      }
+
+      function draw() {
+        drawBackground();
+        drawHUD();
+        drawBricks();
+
+        ctx.fillStyle = '#a78bfa';
+        ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function frame(time) {
+        const dt = Math.min((time - lastTime) / 1000 || 0, 0.03);
+        lastTime = time;
+        update(dt);
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      canvas.addEventListener('pointermove', (event) => setPointer(event.clientX));
+      canvas.addEventListener('pointerdown', (event) => {
+        setPointer(event.clientX);
+        if (state === 'ready') launchBall();
+      });
+
+      window.addEventListener('keydown', (event) => {
+        if (event.code === 'Space') {
+          event.preventDefault();
+          if (state === 'ready') launchBall();
+          else if (state === 'over' || state === 'won') restartGame();
+        }
+        if (event.code === 'ArrowLeft') paddle.x = Math.max(0, paddle.x - 35);
+        if (event.code === 'ArrowRight') paddle.x = Math.min(W - paddle.w, paddle.x + 35);
+      });
+
+      startBtn.addEventListener('click', () => {
+        if (state === 'over' || state === 'won') {
+          restartGame();
+        }
+        launchBall();
+      });
+
+      soundBtn.addEventListener('click', () => {
+        setSound(!soundEnabled);
+        if (soundEnabled) {
+          playTone({ frequency: 660, duration: 0.08, gain: 0.04, type: 'triangle' });
+        }
+      });
+
+      setSound(soundEnabled);
+      updateHUD();
+      makeLevel(level);
+      showOverlay('Ready', 'Нажмите старт', 'Разбейте все кирпичи и пройдите 500 уровней');
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>
