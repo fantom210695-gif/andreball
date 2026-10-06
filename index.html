@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Шарик и кирпичи — 500 уровней</title>
+    <meta
+      name="description"
+      content="Классическая аркадная игра Шарик и кирпичи с 500 уровнями, рекордом, звуком и адаптивным интерфейсом."
+    />
+    <meta name="theme-color" content="#111827" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Arcade Challenge</p>
+          <h1>Шарик и кирпичи</h1>
+        </div>
+
+        <div class="topbar-actions">
+          <button id="installBtn" class="secondary-btn install-btn" hidden aria-label="Установить приложение">
+            ⬇ Установить
+          </button>
+          <button id="themeToggle" class="secondary-btn" aria-label="Переключить тему">
+            🌙 Тема
+          </button>
+          <button id="soundToggle" class="secondary-btn" aria-label="Включить или выключить звук">
+            🔊 Звук
+          </button>
+        </div>
+      </header>
+
+      <section class="hud">
+        <div class="stat-card">
+          <span class="label">Уровень</span>
+          <strong id="levelValue">1 / 500</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Жизни</span>
+          <strong id="livesValue">3</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Счёт</span>
+          <strong id="scoreValue">0</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Рекорд</span>
+          <strong id="bestValue">0</strong>
+        </div>
+      </section>
+
+      <main class="game-panel">
+        <canvas id="gameCanvas" width="900" height="600"></canvas>
+
+        <div id="overlay" class="overlay visible">
+          <div class="overlay-card">
+            <p id="overlayTag">Ready</p>
+            <h2 id="overlayTitle">Нажмите старт</h2>
+            <p id="overlayText">
+              Разбейте все кирпичи и доберитесь до 500 уровня.
+            </p>
+            <button id="startButton" class="primary-btn">Старт</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="pwa.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
